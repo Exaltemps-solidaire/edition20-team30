@@ -223,6 +223,38 @@ Le ciblage par badge et le plafond anti-spam sont en place et démontrables. Ave
     - `frontend/src/lib/donnees.ts` — ajout du champ optionnel `campagneId?: string` sur `Communication`, pour lier une communication à une campagne (critère 3).
     - `frontend/src/app/page.tsx` — formulaire d'ajout du Plan de comm converti en modal (`ModalCommunication`, même style que `ModalCampagne`) ; ajout du sélecteur de campagne optionnel avec pré-remplissage badge/contenu (critères 1 et 2) ; affichage d'un tag avec le nom de la campagne liée dans la liste des communications (critère 3).
 
+## Itération 7 : simplifier le formulaire du Plan de comm (retrait profil/canal, ajout immédiat), filtre par badge
+
+- **Plan validé** (demande du développeur, taillée via 3 questions de cadrage : temps restant, sens de « ajouter sur le champ », puis choix du sous-périmètre parmi 4 demandes initiales).
+- **Temps restant annoncé** : moins de 15 minutes, redemandé le 2026-11-18 — 3e itération de suite sur ce budget serré ; ⚠️ répété au développeur, qui choisit malgré tout de poursuivre en réduisant le périmètre plutôt que de stabiliser.
+- **✂️ Demande initiale découpée** : la demande combinait 4 choses (retrait profil/canal + CTA immédiat, plafond défini par campagne, pause des profils au plafond, filtres). Le développeur a choisi de ne garder que « retrait profil/canal + CTA immédiat » pour cette itération, et y a ajouté un filtre par badge sur la liste du Plan de comm. Le plafond par campagne et la pause des profils restent en « À venir ».
+- **Dans le périmètre** :
+  - Le formulaire d'ajout (modal du Plan de comm) perd les champs Profil et Canal (email/sms).
+  - Le champ Date disparaît du formulaire : un seul CTA « Ajouter » crée la communication avec la date du jour (plus de planification à la création ; le déplacement d'une communication existante vers une autre semaine, lui, reste possible depuis la liste).
+  - Un filtre par badge cible apparaît dans l'onglet Plan de comm et filtre la liste des communications affichées (même principe que le filtre badge de l'onglet Donateurs).
+- **Hors périmètre** : plafond défini par campagne, pause des profils ayant atteint le plafond (reportés), suppression du champ Profil/Canal dans les données déjà créées par les itérations précédentes (elles restent affichables, le champ devient simplement optionnel côté type).
+- **Critères d'acceptation** :
+  - Le formulaire d'ajout ne propose plus ni profil, ni canal, ni date ; un clic sur « Ajouter » crée la communication avec la date du jour.
+  - Un filtre par badge cible, dans l'onglet Plan de comm, restreint la liste affichée au badge choisi.
+  - Les communications existantes restent affichées sans erreur après le changement de type.
+- **Hypothèse de l'équipe couverte** : aucune nouvelle ; simplification UX demandée directement par le développeur, pas une fonctionnalité de la passation.
+- **Codage estimé** : 6 minutes
+- **Fichiers prévus** : `frontend/src/lib/donnees.ts` (type `Communication` : profil/canal optionnels), `frontend/src/lib/communications.ts` (ajout sans date fournie, date du jour par défaut), `frontend/src/app/page.tsx` (modal simplifiée, filtre par badge) — 3 fichiers hors tests
+- **Tests unitaires prévus** : mise à jour des fixtures existantes (`communications.test.ts`, `semaine.test.ts`) pour le type allégé ; pas de nouveau test métier (le filtre est un filtrage d'affichage pur, pas de règle métier nouvelle)
+- **Étapes ajoutées à la démo** : reportées si le temps manque (non bloquant)
+- **Bilan** :
+  - Codage réel : environ 1 minute, très sous le budget estimé — aucun dépassement.
+  - Les 3 critères d'acceptation sont satisfaits : formulaire sans profil/canal/date avec ajout immédiat daté du jour, filtre par badge sur la liste du Plan de comm, communications existantes (avec profil/canal d'origine) toujours affichées sans erreur.
+  - Rien n'a été bloqué par le harnais : `npm test` (17 tests, tous verts — +1 test sur le comportement « date du jour par défaut », qui est une vraie règle métier nouvelle), `npx eslint src` sans erreur, `npm run build` sans erreur TypeScript, `./scripts/verifier-deployabilite.sh` sans BORNE.
+  - Déployé (image frontend reconstruite et republiée, conteneur recréé) et vérifié localement : `/` et `/sante` répondent 200. Version 7 signalée à PM Lab.
+  - ⚠️ 3e itération de suite annoncée à moins de 15 minutes restantes ; le développeur a choisi de continuer en réduisant le périmètre plutôt que de s'arrêter sur la stabilisation.
+  - Reporté à une itération ultérieure : plafond défini par campagne, pause des profils ayant atteint le plafond (les deux faisaient partie de la demande initiale, mis de côté par choix du développeur pour cette itération).
+  - **Modifications** :
+    - `frontend/src/lib/donnees.ts` — `profil` et `canal` deviennent optionnels sur `Communication` (les communications existantes restent valides, les nouvelles ne les renseignent plus).
+    - `frontend/src/lib/communications.ts` — `ajouterCommunication` ne requiert plus de date : sans date fournie, la date du jour est utilisée (ajout immédiat, critère 1).
+    - `frontend/src/app/page.tsx` — `ModalCommunication` perd les champs Profil/Canal/Date, le bouton devient « Ajouter maintenant » (critère 1) ; `SectionPlanDeComm` gagne un filtre par badge cible qui restreint la liste affichée (critère 2) ; les tags Profil/Canal de la liste deviennent conditionnels, affichés seulement quand la donnée existe (critère 3).
+    - `frontend/src/lib/communications.test.ts`, `frontend/src/lib/semaine.test.ts` — fixtures allégées pour le type `Communication` simplifié, + 1 test sur la date du jour par défaut.
+
 ## Replanification après l'itération 5
 
 Le développeur a priorisé le lien Campagnes ↔ Plan de comm (itération 6 ci-dessus) avant de revenir aux reports de l'itération 5 (programmation/activation des campagnes, modal de seuils de badges) et à la détection de conflits.
@@ -231,11 +263,17 @@ Le développeur a priorisé le lien Campagnes ↔ Plan de comm (itération 6 ci-
 
 Le lien Campagnes ↔ Plan de comm est posé. Les reports de l'itération 5 (programmation/activation des campagnes, modal de seuils de badges) restent en tête de la liste « À venir », suivis de la détection de conflits qui porte l'hypothèse mesurée par l'équipe. Le temps restant annoncé (toujours moins de 15 minutes) laisse penser qu'une seule itération supplémentaire sera possible avant la fin du build (⚠️ à reconfirmer au prochain `/iteration`) : à envisager de la consacrer directement à la stabilisation pour le pitch plutôt que d'ouvrir un nouveau périmètre.
 
+## Replanification après l'itération 7
+
+Le formulaire du Plan de comm est simplifié et filtrable par badge. Restent en tête de liste les deux volets mis de côté dans la demande du développeur : le plafond anti-spam défini par campagne (plutôt que globalement dans Donateurs), et un CTA pour mettre en pause un donateur ayant atteint le plafond. ⚠️ Le profil n'étant plus saisi à la création, la règle de fréquence « par profil » prévue en item 3 n'a plus de sens telle quelle : reformulée en règle par badge cible, à confirmer avec le développeur si elle est reprise. ⚠️ Le temps restant (toujours annoncé à moins de 15 minutes, pour la 3e fois) rend de plus en plus probable qu'il ne reste qu'une seule itération avant la fin du build — à envisager pour la stabilisation du pitch plutôt qu'un nouveau périmètre.
+
 ## À venir (non détaillé, à affiner au fil de l'eau)
 
-1. Campagnes : programmation (date), activer/désactiver, modal de réglage des seuils de badges — reporté de l'itération 5.
-2. Détection de conflits (Alertes) : signaler les semaines où un donateur recevrait plusieurs emails, permettre de déplacer/désactiver l'envoi en conflit — **porte l'hypothèse mesurée par l'équipe**. Priorité proposée (⚠️ à valider).
-3. Règles de fréquence par profil : définir une règle (ex. 1 email/semaine max), l'afficher et l'appliquer au calendrier.
-4. Vue hebdomadaire consolidée du Plan de comm (vérifier qu'aucun donateur ne reçoit plus d'un email sur une semaine donnée).
-5. Envoi réel / historique détaillé par communication (qui a reçu quoi), si le temps et le périmètre le permettent.
-6. Stabilisation finale pour le pitch, si le temps restant ne permet plus qu'une itération.
+1. Plafond anti-spam défini par campagne (au lieu du réglage global de Donateurs) — repris de la demande mise de côté à l'itération 7.
+2. Pause d'un donateur ayant atteint le plafond, indépendamment du badge ciblé — repris de la demande mise de côté à l'itération 7.
+3. Campagnes : programmation (date), activer/désactiver, modal de réglage des seuils de badges — reporté de l'itération 5.
+4. Détection de conflits (Alertes) : signaler les semaines où un donateur recevrait plusieurs emails, permettre de déplacer/désactiver l'envoi en conflit — **porte l'hypothèse mesurée par l'équipe**. Priorité proposée (⚠️ à valider).
+5. Règle de fréquence par badge cible (ex. 1 email/semaine max par badge) : le profil n'étant plus un champ du formulaire, cet item remplace la « règle par profil » envisagée plus tôt.
+6. Vue hebdomadaire consolidée du Plan de comm (vérifier qu'aucun donateur ne reçoit plus d'un email sur une semaine donnée).
+7. Envoi réel / historique détaillé par communication (qui a reçu quoi), si le temps et le périmètre le permettent.
+8. Stabilisation finale pour le pitch, si le temps restant ne permet plus qu'une itération.

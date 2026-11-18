@@ -12,11 +12,11 @@ export type Persona = {
 
 export type Communication = {
   id: string;
-  profil: Profil;
+  profil?: Profil;
   cibleBadge: NiveauBadge;
   campagneId?: string;
   date: string;
-  canal: "email" | "sms";
+  canal?: "email" | "sms";
   contenu: string;
 };
 

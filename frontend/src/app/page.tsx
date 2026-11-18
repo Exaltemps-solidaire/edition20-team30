@@ -8,7 +8,6 @@ import {
   personas,
   type Communication,
   type Persona,
-  type Profil,
 } from "../lib/donnees";
 import { regrouperParSemaine } from "../lib/semaine";
 import { ajouterCommunication, deplacerCommunication } from "../lib/communications";
@@ -42,6 +41,7 @@ export default function Home() {
   const [communications, setCommunications] = useState<Communication[]>(communicationsInitiales);
   const [erreur, setErreur] = useState<string | null>(null);
   const [modalCommOuverte, setModalCommOuverte] = useState(false);
+  const [filtreBadgePlan, setFiltreBadgePlan] = useState<NiveauBadge | "tous">("tous");
 
   // --- Donateurs / badges ---
   const [regles, setRegles] = useState<ReglesBadges>(reglesParDefaut);
@@ -77,11 +77,8 @@ export default function Home() {
   }
 
   function soumettreCommunication(nouvelle: {
-    profil: Profil;
     cibleBadge: NiveauBadge;
     campagneId?: string;
-    date: string;
-    canal: "email" | "sms";
     contenu: string;
   }) {
     try {
@@ -181,6 +178,8 @@ export default function Home() {
           }}
           soumettre={soumettreCommunication}
           deplacer={deplacer}
+          filtreBadge={filtreBadgePlan}
+          setFiltreBadge={setFiltreBadgePlan}
         />
       ) : section === "donateurs" ? (
         <SectionDonateurs
@@ -220,17 +219,15 @@ function SectionPlanDeComm(props: {
   modalOuverte: boolean;
   ouvrirModal: () => void;
   fermerModal: () => void;
-  soumettre: (nouvelle: {
-    profil: Profil;
-    cibleBadge: NiveauBadge;
-    campagneId?: string;
-    date: string;
-    canal: "email" | "sms";
-    contenu: string;
-  }) => void;
+  soumettre: (nouvelle: { cibleBadge: NiveauBadge; campagneId?: string; contenu: string }) => void;
   deplacer: (id: string, date: string) => void;
+  filtreBadge: NiveauBadge | "tous";
+  setFiltreBadge: (b: NiveauBadge | "tous") => void;
 }) {
-  const parSemaine = [...regrouperParSemaine(props.communications).entries()].sort(([a], [b]) =>
+  const communicationsFiltrees = props.communications.filter(
+    (c) => props.filtreBadge === "tous" || c.cibleBadge === props.filtreBadge,
+  );
+  const parSemaine = [...regrouperParSemaine(communicationsFiltrees).entries()].sort(([a], [b]) =>
     a.localeCompare(b),
   );
   const campagnesParId = new Map(props.campagnes.map((c) => [c.id, c]));
@@ -241,6 +238,19 @@ function SectionPlanDeComm(props: {
         <button type="button" className={styles.boutonPrimaire} onClick={props.ouvrirModal}>
           + Nouvelle communication
         </button>
+        <label className={styles.champLabel}>
+          Filtrer par badge
+          <select
+            className={styles.champ}
+            value={props.filtreBadge}
+            onChange={(e) => props.setFiltreBadge(e.target.value as NiveauBadge | "tous")}
+          >
+            <option value="tous">Tous</option>
+            <option value="bronze">Bronze</option>
+            <option value="argent">Argent</option>
+            <option value="or">Or</option>
+          </select>
+        </label>
       </div>
 
       {parSemaine.map(([semaine, comms]) => (
@@ -251,8 +261,8 @@ function SectionPlanDeComm(props: {
               <li key={comm.id} className={styles.comm}>
                 <div className={styles.commContenu}>{comm.contenu}</div>
                 <div className={styles.commMeta}>
-                  <span className={styles.tag}>{libellesProfil[comm.profil]}</span>
-                  <span className={styles.tag}>{comm.canal}</span>
+                  {comm.profil && <span className={styles.tag}>{libellesProfil[comm.profil]}</span>}
+                  {comm.canal && <span className={styles.tag}>{comm.canal}</span>}
                   <span className={`${styles.tagBadge} ${styles[`badge-${comm.cibleBadge}`]}`}>
                     {libellesBadge[comm.cibleBadge]}
                   </span>
@@ -298,20 +308,10 @@ function ModalCommunication(props: {
   campagnes: Campagne[];
   erreur: string | null;
   fermer: () => void;
-  soumettre: (nouvelle: {
-    profil: Profil;
-    cibleBadge: NiveauBadge;
-    campagneId?: string;
-    date: string;
-    canal: "email" | "sms";
-    contenu: string;
-  }) => void;
+  soumettre: (nouvelle: { cibleBadge: NiveauBadge; campagneId?: string; contenu: string }) => void;
 }) {
-  const [profil, setProfil] = useState<Profil>("nouveau");
   const [cibleBadge, setCibleBadge] = useState<NiveauBadge>("bronze");
   const [campagneId, setCampagneId] = useState("");
-  const [date, setDate] = useState("");
-  const [canal, setCanal] = useState<"email" | "sms">("email");
   const [contenu, setContenu] = useState("");
 
   function choisirCampagne(id: string) {
@@ -336,21 +336,6 @@ function ModalCommunication(props: {
     <div className={styles.modalFond} onClick={props.fermer}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.carteTitre}>Nouvelle communication</div>
-
-        <label className={styles.champLabel}>
-          Profil
-          <select
-            className={styles.champ}
-            value={profil}
-            onChange={(e) => setProfil(e.target.value as Profil)}
-          >
-            {Object.entries(libellesProfil).map(([valeur, libelle]) => (
-              <option key={valeur} value={valeur}>
-                {libelle}
-              </option>
-            ))}
-          </select>
-        </label>
 
         <label className={styles.champLabel}>
           Campagne (optionnelle)
@@ -384,28 +369,6 @@ function ModalCommunication(props: {
         </label>
 
         <label className={styles.champLabel}>
-          Canal
-          <select
-            className={styles.champ}
-            value={canal}
-            onChange={(e) => setCanal(e.target.value as "email" | "sms")}
-          >
-            <option value="email">Email</option>
-            <option value="sms">SMS</option>
-          </select>
-        </label>
-
-        <label className={styles.champLabel}>
-          Date
-          <input
-            className={styles.champ}
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-          />
-        </label>
-
-        <label className={styles.champLabel}>
           Contenu
           <textarea
             className={styles.champLarge}
@@ -422,16 +385,13 @@ function ModalCommunication(props: {
             className={styles.boutonPrimaire}
             onClick={() =>
               props.soumettre({
-                profil,
                 cibleBadge,
                 campagneId: campagneId || undefined,
-                date,
-                canal,
                 contenu,
               })
             }
           >
-            Ajouter
+            Ajouter maintenant
           </button>
           <button type="button" className={styles.boutonSecondaire} onClick={props.fermer}>
             Annuler
