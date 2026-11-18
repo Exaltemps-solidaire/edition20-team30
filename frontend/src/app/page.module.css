@@ -273,6 +273,39 @@
   border: 1px solid #ffe58f;
 }
 
+.modalFond {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal {
+  background: #fff;
+  border-radius: var(--ant-radius);
+  box-shadow: var(--ant-shadow);
+  padding: 1.5rem;
+  width: 28rem;
+  max-width: 90vw;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.filtreBadgeOption {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 1px solid var(--ant-border);
+  border-radius: var(--ant-radius-sm);
+  padding: 0.3rem 0.6rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
 .tagPlafond {
   display: inline-flex;
   align-items: center;

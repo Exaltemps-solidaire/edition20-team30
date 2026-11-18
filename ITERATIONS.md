@@ -161,10 +161,47 @@
 
 Le ciblage par badge et le plafond anti-spam sont en place et démontrables. Avec le temps restant annoncé (15 à 30 minutes au lancement de cette itération), et sans nouvelle demande du développeur, la priorité proposée reste la détection de conflits (item 1 ci-dessous) : elle porte l'hypothèse mesurée par l'équipe et n'a toujours pas été codée. ⚠️ Cette priorité reste à valider par les cadreurs, comme signalé après l'itération 2.
 
+## Itération 5 : Campagnes marketing ciblées par badge (création via modal façon filtres)
+
+- **Plan validé** (découpage choisi par le développeur face au ✂️ ci-dessous).
+- **Temps restant annoncé** : moins de 15 minutes, demandé le 2026-11-18 à 16:45.
+- **⚠️ Budget serré** : moins de 15 minutes ne couvre normalement pas codage (≤10 min) + publication (~5 min) + tour de test de l'équipe (≥10 min, le goulot). Cette itération privilégie donc le codage et la publication ; le tour de test complet par l'équipe pourrait devoir attendre après la fin annoncée du build. Signalé au développeur.
+- **✂️ Découpage** : la demande initiale (campagnes + ciblage multi-badge + modal de création + programmation + activer/désactiver + modal de réglage des seuils de badges) dépassait largement une itération. Le développeur a choisi de garder, pour cette itération : la nouvelle entité Campagne et sa modal de création avec ciblage multi-badge. Sont reportés à l'itération 6 : programmation (date), activation/désactivation, et la modal de réglage des seuils de badges (actuellement un panneau inline, pas une modal — mais la mise à jour des utilisateurs est déjà automatique puisque le badge est recalculé dynamiquement depuis les règles).
+- **Dans le périmètre** :
+  - Nouvelle entité Campagne : nom, type (ex. anniversaire du don, fin d'année, remerciement don récurrent — inspirés de la passation), contenu, un ou plusieurs badges cibles (bronze/argent/or).
+  - Écran Campagnes (nouvel onglet) : liste des campagnes avec leurs badges cibles affichés.
+  - Modal de création : ciblage présenté comme des filtres (cases à cocher par badge, sélectionnables à plusieurs), plutôt qu'un simple select.
+- **Hors périmètre** : programmation/date d'envoi, activer/désactiver une campagne, modal de réglage des seuils de badges, lien entre campagnes et calcul des destinataires du Plan de comm.
+- **Critères d'acceptation** :
+  - Je peux créer une campagne (nom, type, contenu) via une modal façon filtres, en lui assignant un ou plusieurs badges cibles.
+  - La campagne créée apparaît dans la liste de l'onglet Campagnes, avec ses badges cibles affichés.
+  - Une campagne sans nom, sans contenu ou sans aucun badge coché est refusée, avec un message d'erreur.
+- **Hypothèse de l'équipe couverte** : partiellement — l'email anniversaire du don et « une outil de campagne marketing ciblage/contenu » sont l'idée retenue dans la passation (`passation/passation.json`), mais le ciblage par badge reste une extension du harnais (cf. ⚠️ des itérations 3/4), à faire valider par les cadreurs.
+- **Codage estimé** : 8 minutes
+- **Fichiers prévus** : `frontend/src/lib/campagnes.ts` (nouveau), `frontend/src/app/page.tsx`, `frontend/src/app/page.module.css` — 3 fichiers hors tests
+- **Tests unitaires prévus** : 2 à 3 tests Vitest sur `ajouterCampagne` (validation nom/contenu/badges, conservation des badges multiples)
+- **Étapes ajoutées à la démo** : reportées si le temps manque (non bloquant)
+- **Bilan** :
+  - Durée de codage réelle : ~1 minute (chrono `.iterations/5.debut`/`.fin`), très sous le plafond de 8 minutes estimé.
+  - Critères d'acceptation : les 3 sont satisfaits — création via modal avec cases à cocher par badge (filtre à choix multiples), apparition dans la liste de l'onglet Campagnes avec badges affichés, et rejet (message d'erreur) sans nom/contenu/badge.
+  - Ce que le harnais a bloqué ou refusé : rien. `verifier-deployabilite.sh` ne signale aucune borne, `npm test` passe (16 tests), le signal `version-prete 5` a été accepté par PM Lab.
+  - ⚠️ Non vérifié dans ce tour, comme annoncé : avec moins de 15 minutes restantes au lancement, le tour de test complet de l'équipe dans PM Lab n'a pas pu être garanti avant la fin du build. À suivre avec le développeur.
+  - Reporté à l'itération 6 : programmation (date) d'une campagne, activer/désactiver, modal de réglage des seuils de badges (déplacer le panneau existant), étapes de démo Playwright pour les campagnes.
+  - **Modifications** :
+    - `frontend/src/lib/campagnes.ts` (nouveau) — type `Campagne`, types de campagne inspirés de la passation (anniversaire du don, fin d'année, remerciement récurrent, réactivation), fonction pure `ajouterCampagne` (validation nom/contenu/badges).
+    - `frontend/src/lib/campagnes.test.ts` (nouveau) — 3 tests Vitest sur `ajouterCampagne`.
+    - `frontend/src/app/page.tsx` — nouvel onglet Campagnes, `SectionCampagnes` (liste) et `ModalCampagne` (création avec ciblage multi-badge façon filtres à cocher).
+    - `frontend/src/app/page.module.css` — styles `.modalFond`, `.modal`, `.filtreBadgeOption`.
+
+## Replanification après l'itération 4
+
+Le ciblage par badge et le plafond anti-spam sont en place et démontrables. Avec le temps restant annoncé (15 à 30 minutes au lancement de cette itération), et sans nouvelle demande du développeur, la priorité proposée restait la détection de conflits. Le développeur a ensuite demandé les campagnes marketing (itération 5 ci-dessus), qui passe devant dans l'ordre réel d'exécution.
+
 ## À venir (non détaillé, à affiner au fil de l'eau)
 
-1. Détection de conflits (Alertes) : signaler les semaines où un donateur recevrait plusieurs emails, permettre de déplacer/désactiver l'envoi en conflit — **porte l'hypothèse mesurée par l'équipe**. Priorité proposée (⚠️ à valider).
-2. Règles de fréquence par profil : définir une règle (ex. 1 email/semaine max), l'afficher et l'appliquer au calendrier.
-3. Vue hebdomadaire consolidée du Plan de comm (vérifier qu'aucun donateur ne reçoit plus d'un email sur une semaine donnée).
-4. Envoi réel / historique détaillé par communication (qui a reçu quoi), si le temps et le périmètre le permettent.
-5. Stabilisation finale pour le pitch, si le temps restant ne permet plus qu'une itération.
+1. Campagnes : programmation (date), activer/désactiver, modal de réglage des seuils de badges — reporté de l'itération 5.
+2. Détection de conflits (Alertes) : signaler les semaines où un donateur recevrait plusieurs emails, permettre de déplacer/désactiver l'envoi en conflit — **porte l'hypothèse mesurée par l'équipe**. Priorité proposée (⚠️ à valider).
+3. Règles de fréquence par profil : définir une règle (ex. 1 email/semaine max), l'afficher et l'appliquer au calendrier.
+4. Vue hebdomadaire consolidée du Plan de comm (vérifier qu'aucun donateur ne reçoit plus d'un email sur une semaine donnée).
+5. Envoi réel / historique détaillé par communication (qui a reçu quoi), si le temps et le périmètre le permettent.
+6. Stabilisation finale pour le pitch, si le temps restant ne permet plus qu'une itération.

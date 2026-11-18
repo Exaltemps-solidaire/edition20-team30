@@ -24,8 +24,15 @@ import {
   type NiveauBadge,
   type ReglesBadges,
 } from "../lib/badges";
+import {
+  ajouterCampagne,
+  campagnesInitiales,
+  libellesTypeCampagne,
+  type Campagne,
+  type TypeCampagne,
+} from "../lib/campagnes";
 
-type Section = "plan" | "donateurs";
+type Section = "plan" | "donateurs" | "campagnes";
 
 export default function Home() {
   const [persona, setPersona] = useState<Persona | null>(null);
@@ -46,6 +53,11 @@ export default function Home() {
   const [filtreBadge, setFiltreBadge] = useState<NiveauBadge | "tous">("tous");
   const [plafondEmails, setPlafondEmails] = useState(plafondEmailsParDefaut);
   const [filtrePlafondAtteint, setFiltrePlafondAtteint] = useState(false);
+
+  // --- Campagnes ---
+  const [campagnes, setCampagnes] = useState<Campagne[]>(campagnesInitiales);
+  const [modalCampagneOuverte, setModalCampagneOuverte] = useState(false);
+  const [erreurCampagne, setErreurCampagne] = useState<string | null>(null);
 
   if (!persona) {
     return (
@@ -103,10 +115,27 @@ export default function Home() {
     }
   }
 
+  function soumettreCampagne(nouvelle: {
+    nom: string;
+    type: TypeCampagne;
+    contenu: string;
+    ciblesBadges: NiveauBadge[];
+  }) {
+    try {
+      setCampagnes(ajouterCampagne(campagnes, nouvelle));
+      setErreurCampagne(null);
+      setModalCampagneOuverte(false);
+    } catch (err) {
+      setErreurCampagne(err instanceof Error ? err.message : "Erreur");
+    }
+  }
+
   return (
     <div className={styles.page}>
       <div className={styles.entete}>
-        <h1 className={styles.titre}>{section === "plan" ? "Plan de comm" : "Donateurs"}</h1>
+        <h1 className={styles.titre}>
+          {section === "plan" ? "Plan de comm" : section === "donateurs" ? "Donateurs" : "Campagnes"}
+        </h1>
         <div>
           <span className={styles.personaActuel}>
             {persona.nom} · {persona.role}
@@ -136,6 +165,13 @@ export default function Home() {
         >
           Donateurs
         </button>
+        <button
+          type="button"
+          className={section === "campagnes" ? styles.ongletActif : styles.onglet}
+          onClick={() => setSection("campagnes")}
+        >
+          Campagnes
+        </button>
       </nav>
 
       {section === "plan" ? (
@@ -157,7 +193,7 @@ export default function Home() {
           soumettreAjout={soumettreAjout}
           deplacer={deplacer}
         />
-      ) : (
+      ) : section === "donateurs" ? (
         <SectionDonateurs
           regles={regles}
           erreurRegles={erreurRegles}
@@ -168,6 +204,18 @@ export default function Home() {
           setPlafondEmails={setPlafondEmails}
           filtrePlafondAtteint={filtrePlafondAtteint}
           setFiltrePlafondAtteint={setFiltrePlafondAtteint}
+        />
+      ) : (
+        <SectionCampagnes
+          campagnes={campagnes}
+          modalOuverte={modalCampagneOuverte}
+          ouvrirModal={() => setModalCampagneOuverte(true)}
+          fermerModal={() => {
+            setModalCampagneOuverte(false);
+            setErreurCampagne(null);
+          }}
+          erreur={erreurCampagne}
+          soumettre={soumettreCampagne}
         />
       )}
     </div>
@@ -422,5 +470,149 @@ function SectionDonateurs(props: {
         ))}
       </ul>
     </section>
+  );
+}
+
+function SectionCampagnes(props: {
+  campagnes: Campagne[];
+  modalOuverte: boolean;
+  ouvrirModal: () => void;
+  fermerModal: () => void;
+  erreur: string | null;
+  soumettre: (nouvelle: {
+    nom: string;
+    type: TypeCampagne;
+    contenu: string;
+    ciblesBadges: NiveauBadge[];
+  }) => void;
+}) {
+  return (
+    <section className={styles.section}>
+      <div className={styles.formLigne} style={{ marginBottom: "1rem" }}>
+        <button type="button" className={styles.boutonPrimaire} onClick={props.ouvrirModal}>
+          + Nouvelle campagne
+        </button>
+      </div>
+
+      <ul className={styles.listeComms}>
+        {props.campagnes.map((camp) => (
+          <li key={camp.id} className={styles.comm}>
+            <div>
+              <div className={styles.commContenu}>
+                <strong>{camp.nom}</strong>
+              </div>
+              <div className={styles.commContenu}>{camp.contenu}</div>
+            </div>
+            <div className={styles.commMeta}>
+              <span className={styles.tag}>{libellesTypeCampagne[camp.type]}</span>
+              {camp.ciblesBadges.map((b) => (
+                <span key={b} className={`${styles.tagBadge} ${styles[`badge-${b}`]}`}>
+                  {libellesBadge[b]}
+                </span>
+              ))}
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      {props.modalOuverte && (
+        <ModalCampagne erreur={props.erreur} fermer={props.fermerModal} soumettre={props.soumettre} />
+      )}
+    </section>
+  );
+}
+
+function ModalCampagne(props: {
+  erreur: string | null;
+  fermer: () => void;
+  soumettre: (nouvelle: {
+    nom: string;
+    type: TypeCampagne;
+    contenu: string;
+    ciblesBadges: NiveauBadge[];
+  }) => void;
+}) {
+  const [nom, setNom] = useState("");
+  const [type, setType] = useState<TypeCampagne>("anniversaire-don");
+  const [contenu, setContenu] = useState("");
+  const [ciblesBadges, setCiblesBadges] = useState<NiveauBadge[]>([]);
+
+  function basculerBadge(b: NiveauBadge) {
+    setCiblesBadges((liste) =>
+      liste.includes(b) ? liste.filter((x) => x !== b) : [...liste, b],
+    );
+  }
+
+  return (
+    <div className={styles.modalFond} onClick={props.fermer}>
+      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.carteTitre}>Nouvelle campagne</div>
+
+        <label className={styles.champLabel}>
+          Nom
+          <input
+            className={styles.champLarge}
+            type="text"
+            value={nom}
+            onChange={(e) => setNom(e.target.value)}
+          />
+        </label>
+
+        <label className={styles.champLabel}>
+          Type
+          <select
+            className={styles.champ}
+            value={type}
+            onChange={(e) => setType(e.target.value as TypeCampagne)}
+          >
+            {Object.entries(libellesTypeCampagne).map(([valeur, libelle]) => (
+              <option key={valeur} value={valeur}>
+                {libelle}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <div className={styles.champLabel}>
+          Badges ciblés (un ou plusieurs)
+          <div className={styles.formLigne}>
+            {Object.entries(libellesBadge).map(([valeur, libelle]) => (
+              <label key={valeur} className={styles.filtreBadgeOption}>
+                <input
+                  type="checkbox"
+                  checked={ciblesBadges.includes(valeur as NiveauBadge)}
+                  onChange={() => basculerBadge(valeur as NiveauBadge)}
+                />{" "}
+                {libelle}
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <label className={styles.champLabel}>
+          Contenu
+          <textarea
+            className={styles.champLarge}
+            value={contenu}
+            onChange={(e) => setContenu(e.target.value)}
+          />
+        </label>
+
+        {props.erreur && <div className={styles.erreur}>{props.erreur}</div>}
+
+        <div className={styles.formLigne}>
+          <button
+            type="button"
+            className={styles.boutonPrimaire}
+            onClick={() => props.soumettre({ nom, type, contenu, ciblesBadges })}
+          >
+            Créer la campagne
+          </button>
+          <button type="button" className={styles.boutonSecondaire} onClick={props.fermer}>
+            Annuler
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
