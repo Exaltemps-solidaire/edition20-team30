@@ -255,6 +255,28 @@ Le ciblage par badge et le plafond anti-spam sont en place et démontrables. Ave
     - `frontend/src/app/page.tsx` — `ModalCommunication` perd les champs Profil/Canal/Date, le bouton devient « Ajouter maintenant » (critère 1) ; `SectionPlanDeComm` gagne un filtre par badge cible qui restreint la liste affichée (critère 2) ; les tags Profil/Canal de la liste deviennent conditionnels, affichés seulement quand la donnée existe (critère 3).
     - `frontend/src/lib/communications.test.ts`, `frontend/src/lib/semaine.test.ts` — fixtures allégées pour le type `Communication` simplifié, + 1 test sur la date du jour par défaut.
 
+## Itération 8 : nouvel onglet « Paramétrage anti-spam » (placeholder, en façade uniquement)
+
+- **Plan validé** (demande du développeur, déjà taillée par lui-même : un onglet, un champ non fonctionnel, explicitement marqué « en cours »).
+- **Temps restant annoncé** : moins de 15 minutes, redemandé le 2026-11-18 — 4e itération de suite sur ce budget serré ; ⚠️ signalé, le développeur poursuit.
+- **Dans le périmètre** : un nouvel onglet « Anti-spam », avec un champ texte/numérique non relié à une quelconque logique, et une mention visible indiquant que l'écran est en cours de construction.
+- **Hors périmètre** : tout branchement réel (le champ ne lit ni n'écrit le plafond existant, qui reste dans l'onglet Donateurs pour l'instant), le plafond par campagne et la pause des profils (toujours en tête de « À venir »).
+- **Critères d'acceptation** :
+  - Un onglet « Anti-spam » apparaît dans la navigation, à côté de Plan de comm / Donateurs / Campagnes.
+  - Il affiche un champ de saisie non fonctionnel (aucune donnée lue ni modifiée) et un indicateur explicite « en cours ».
+- **Hypothèse de l'équipe couverte** : aucune — pure façade, pas de fonctionnalité à valider.
+- **Codage estimé** : 3 minutes
+- **Fichiers prévus** : `frontend/src/app/page.tsx` (nouvel onglet + composant placeholder) — 1 fichier hors tests
+- **Tests unitaires prévus** : aucun (balisage pur, pas de logique métier, conforme à la DoD)
+- **Bilan** :
+  - Codage réel : moins d'une minute, aucun dépassement.
+  - Les 2 critères d'acceptation sont satisfaits : onglet « Anti-spam » visible dans la navigation, champ désactivé avec libellé « (à venir) » et badge « En cours de construction » explicite.
+  - Rien n'a été bloqué par le harnais : `npm test` (17 tests, inchangé, aucun nouveau test nécessaire), `npx eslint src` sans erreur, `npm run build` sans erreur, `./scripts/verifier-deployabilite.sh` sans BORNE.
+  - Déployé et vérifié localement : `/` et `/sante` répondent 200. Version 8 signalée à PM Lab.
+  - ⚠️ 4e itération de suite annoncée à moins de 15 minutes restantes.
+  - **Modifications** :
+    - `frontend/src/app/page.tsx` — nouvel onglet « Anti-spam » dans la navigation et le titre ; nouveau composant `SectionAntiSpam` : champ désactivé non relié à une logique, avec le tag « En cours de construction » (réutilise `.tagPlafond`).
+
 ## Replanification après l'itération 5
 
 Le développeur a priorisé le lien Campagnes ↔ Plan de comm (itération 6 ci-dessus) avant de revenir aux reports de l'itération 5 (programmation/activation des campagnes, modal de seuils de badges) et à la détection de conflits.
@@ -267,9 +289,13 @@ Le lien Campagnes ↔ Plan de comm est posé. Les reports de l'itération 5 (pro
 
 Le formulaire du Plan de comm est simplifié et filtrable par badge. Restent en tête de liste les deux volets mis de côté dans la demande du développeur : le plafond anti-spam défini par campagne (plutôt que globalement dans Donateurs), et un CTA pour mettre en pause un donateur ayant atteint le plafond. ⚠️ Le profil n'étant plus saisi à la création, la règle de fréquence « par profil » prévue en item 3 n'a plus de sens telle quelle : reformulée en règle par badge cible, à confirmer avec le développeur si elle est reprise. ⚠️ Le temps restant (toujours annoncé à moins de 15 minutes, pour la 3e fois) rend de plus en plus probable qu'il ne reste qu'une seule itération avant la fin du build — à envisager pour la stabilisation du pitch plutôt qu'un nouveau périmètre.
 
+## Replanification après l'itération 8
+
+L'onglet Anti-spam existe en façade ; le brancher réellement (lire/écrire un plafond, remplacer ou compléter celui de Donateurs) reste à faire et rejoint le point 1 de la liste ci-dessous, qui lui est maintenant le candidat naturel pour le « brancher ». ⚠️ 4e itération de suite à moins de 15 minutes annoncées : je recommande fortement que la prochaine itération soit la dernière avant stabilisation, sauf si le temps restant annoncé s'allonge.
+
 ## À venir (non détaillé, à affiner au fil de l'eau)
 
-1. Plafond anti-spam défini par campagne (au lieu du réglage global de Donateurs) — repris de la demande mise de côté à l'itération 7.
+1. Brancher l'onglet Anti-spam : plafond défini par campagne (au lieu du réglage global de Donateurs), lu/écrit depuis le champ aujourd'hui désactivé — repris de la demande mise de côté à l'itération 7.
 2. Pause d'un donateur ayant atteint le plafond, indépendamment du badge ciblé — repris de la demande mise de côté à l'itération 7.
 3. Campagnes : programmation (date), activer/désactiver, modal de réglage des seuils de badges — reporté de l'itération 5.
 4. Détection de conflits (Alertes) : signaler les semaines où un donateur recevrait plusieurs emails, permettre de déplacer/désactiver l'envoi en conflit — **porte l'hypothèse mesurée par l'équipe**. Priorité proposée (⚠️ à valider).

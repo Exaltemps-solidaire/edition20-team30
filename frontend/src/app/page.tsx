@@ -31,7 +31,7 @@ import {
   type TypeCampagne,
 } from "../lib/campagnes";
 
-type Section = "plan" | "donateurs" | "campagnes";
+type Section = "plan" | "donateurs" | "campagnes" | "antispam";
 
 export default function Home() {
   const [persona, setPersona] = useState<Persona | null>(null);
@@ -123,7 +123,13 @@ export default function Home() {
     <div className={styles.page}>
       <div className={styles.entete}>
         <h1 className={styles.titre}>
-          {section === "plan" ? "Plan de comm" : section === "donateurs" ? "Donateurs" : "Campagnes"}
+          {section === "plan"
+            ? "Plan de comm"
+            : section === "donateurs"
+              ? "Donateurs"
+              : section === "campagnes"
+                ? "Campagnes"
+                : "Anti-spam"}
         </h1>
         <div>
           <span className={styles.personaActuel}>
@@ -161,6 +167,13 @@ export default function Home() {
         >
           Campagnes
         </button>
+        <button
+          type="button"
+          className={section === "antispam" ? styles.ongletActif : styles.onglet}
+          onClick={() => setSection("antispam")}
+        >
+          Anti-spam
+        </button>
       </nav>
 
       {section === "plan" ? (
@@ -193,7 +206,7 @@ export default function Home() {
           filtrePlafondAtteint={filtrePlafondAtteint}
           setFiltrePlafondAtteint={setFiltrePlafondAtteint}
         />
-      ) : (
+      ) : section === "campagnes" ? (
         <SectionCampagnes
           campagnes={campagnes}
           modalOuverte={modalCampagneOuverte}
@@ -205,6 +218,8 @@ export default function Home() {
           erreur={erreurCampagne}
           soumettre={soumettreCampagne}
         />
+      ) : (
+        <SectionAntiSpam />
       )}
     </div>
   );
@@ -399,6 +414,31 @@ function ModalCommunication(props: {
         </div>
       </div>
     </div>
+  );
+}
+
+function SectionAntiSpam() {
+  const [plafond, setPlafond] = useState("");
+
+  return (
+    <section className={styles.section}>
+      <div className={styles.carte}>
+        <div className={styles.carteTitre}>
+          Paramétrage anti-spam <span className={styles.tagPlafond}>En cours de construction</span>
+        </div>
+        <label className={styles.champLabel}>
+          Plafond anti-spam (à venir)
+          <input
+            className={styles.champ}
+            type="text"
+            placeholder="Ex. 3 emails max par donateur"
+            value={plafond}
+            onChange={(e) => setPlafond(e.target.value)}
+            disabled
+          />
+        </label>
+      </div>
+    </section>
   );
 }
 
