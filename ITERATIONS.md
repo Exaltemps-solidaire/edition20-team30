@@ -193,9 +193,43 @@ Le ciblage par badge et le plafond anti-spam sont en place et démontrables. Ave
     - `frontend/src/app/page.tsx` — nouvel onglet Campagnes, `SectionCampagnes` (liste) et `ModalCampagne` (création avec ciblage multi-badge façon filtres à cocher).
     - `frontend/src/app/page.module.css` — styles `.modalFond`, `.modal`, `.filtreBadgeOption`.
 
-## Replanification après l'itération 4
+## Itération 6 : Lier une campagne au Plan de comm, formulaire d'ajout en modal façon filtres
 
-Le ciblage par badge et le plafond anti-spam sont en place et démontrables. Avec le temps restant annoncé (15 à 30 minutes au lancement de cette itération), et sans nouvelle demande du développeur, la priorité proposée restait la détection de conflits. Le développeur a ensuite demandé les campagnes marketing (itération 5 ci-dessus), qui passe devant dans l'ordre réel d'exécution.
+- **Plan validé** (découpage reformulé par le développeur après ma question sur la nature du lien).
+- **Temps restant annoncé** : moins de 15 minutes, redemandé le 2026-11-18 à 16:51 — toujours aussi serré qu'à l'itération 5 ; même réserve sur le tour de test complet de l'équipe.
+- **✂️ Une seule itération pour deux changements** : ils touchent la même interaction (le formulaire d'ajout de communication), donc regroupés plutôt que scindés.
+- **Dans le périmètre** :
+  - Le formulaire « Ajouter une communication » de l'onglet Plan de comm devient une modal (comme celle des Campagnes), avec les mêmes champs présentés façon filtres.
+  - Nouveau champ optionnel : Campagne. La sélectionner pré-remplit le badge cible et le contenu depuis la campagne (badge = premier badge ciblé par la campagne, contenu = contenu de la campagne) ; les deux restent modifiables.
+  - La communication créée affiche, si elle est liée, le nom de la campagne dans sa liste (Plan de comm).
+- **Hors périmètre** : conversion inverse (campagne → plusieurs communications programmées automatiquement), programmation/activation des campagnes elles-mêmes (toujours reportées), calcul de pression combiné campagnes+communications.
+- **Critères d'acceptation** :
+  - Le bouton « Ajouter » de Plan de comm ouvre une modal avec un sélecteur de campagne (optionnel), en plus des champs existants.
+  - Choisir une campagne pré-remplit le badge cible et le contenu, que je peux ensuite modifier avant de valider.
+  - La communication créée affiche le nom de sa campagne liée, si elle en a une, dans la liste du Plan de comm.
+- **Hypothèse de l'équipe couverte** : aucune nouvelle — prolonge le lien badges/campagnes déjà hors passation (cf. ⚠️ itérations 3-5), à faire valider par les cadreurs.
+- **Codage estimé** : 6 minutes
+- **Fichiers prévus** : `frontend/src/lib/donnees.ts` (champ `campagneId` optionnel sur `Communication`), `frontend/src/app/page.tsx` (modal du formulaire, sélecteur de campagne, tag campagne dans la liste) — 2 fichiers hors tests
+- **Tests unitaires prévus** : aucun nouveau test métier (le champ est une simple donnée optionnelle transportée telle quelle par `ajouterCommunication`, déjà couvert) ; les tests existants restent verts
+- **Étapes ajoutées à la démo** : reportées si le temps manque (non bloquant)
+- **Bilan** :
+  - Codage réel : environ 3 minutes, sous le budget estimé — aucun dépassement, alarme des 8 minutes non atteinte.
+  - Les 3 critères d'acceptation sont satisfaits : modal d'ajout avec sélecteur de campagne optionnel, pré-remplissage badge+contenu modifiable, tag campagne affiché sur la communication créée.
+  - Rien n'a été bloqué par le harnais : `npm test` (16 tests, tous verts, aucun nouveau test comme prévu), `npx eslint src` sans erreur, `npm run build` sans erreur TypeScript, `./scripts/verifier-deployabilite.sh` sans BORNE.
+  - Déployé (image frontend reconstruite et republiée, conteneur recréé) et vérifié localement : `/` et `/sante` répondent 200. Version 6 signalée à PM Lab.
+  - ⚠️ Même réserve qu'aux itérations précédentes : le temps restant annoncé (moins de 15 minutes) reste serré pour un tour de test complet de l'équipe après publication.
+  - Étapes de démo (`e2e/demo.spec.ts`) non mises à jour cette itération, faute de temps — reporté, non bloquant.
+  - **Modifications** :
+    - `frontend/src/lib/donnees.ts` — ajout du champ optionnel `campagneId?: string` sur `Communication`, pour lier une communication à une campagne (critère 3).
+    - `frontend/src/app/page.tsx` — formulaire d'ajout du Plan de comm converti en modal (`ModalCommunication`, même style que `ModalCampagne`) ; ajout du sélecteur de campagne optionnel avec pré-remplissage badge/contenu (critères 1 et 2) ; affichage d'un tag avec le nom de la campagne liée dans la liste des communications (critère 3).
+
+## Replanification après l'itération 5
+
+Le développeur a priorisé le lien Campagnes ↔ Plan de comm (itération 6 ci-dessus) avant de revenir aux reports de l'itération 5 (programmation/activation des campagnes, modal de seuils de badges) et à la détection de conflits.
+
+## Replanification après l'itération 6
+
+Le lien Campagnes ↔ Plan de comm est posé. Les reports de l'itération 5 (programmation/activation des campagnes, modal de seuils de badges) restent en tête de la liste « À venir », suivis de la détection de conflits qui porte l'hypothèse mesurée par l'équipe. Le temps restant annoncé (toujours moins de 15 minutes) laisse penser qu'une seule itération supplémentaire sera possible avant la fin du build (⚠️ à reconfirmer au prochain `/iteration`) : à envisager de la consacrer directement à la stabilisation pour le pitch plutôt que d'ouvrir un nouveau périmètre.
 
 ## À venir (non détaillé, à affiner au fil de l'eau)
 

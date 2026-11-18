@@ -41,11 +41,7 @@ export default function Home() {
   // --- Plan de comm ---
   const [communications, setCommunications] = useState<Communication[]>(communicationsInitiales);
   const [erreur, setErreur] = useState<string | null>(null);
-  const [profil, setProfil] = useState<Profil>("nouveau");
-  const [cibleBadge, setCibleBadge] = useState<NiveauBadge>("bronze");
-  const [date, setDate] = useState("");
-  const [canal, setCanal] = useState<"email" | "sms">("email");
-  const [contenu, setContenu] = useState("");
+  const [modalCommOuverte, setModalCommOuverte] = useState(false);
 
   // --- Donateurs / badges ---
   const [regles, setRegles] = useState<ReglesBadges>(reglesParDefaut);
@@ -80,24 +76,20 @@ export default function Home() {
     );
   }
 
-  function soumettreAjout(e: React.FormEvent) {
-    e.preventDefault();
+  function soumettreCommunication(nouvelle: {
+    profil: Profil;
+    cibleBadge: NiveauBadge;
+    campagneId?: string;
+    date: string;
+    canal: "email" | "sms";
+    contenu: string;
+  }) {
     try {
-      setCommunications(
-        ajouterCommunication(communications, { profil, cibleBadge, date, canal, contenu }),
-      );
+      setCommunications(ajouterCommunication(communications, nouvelle));
       setErreur(null);
-      setDate("");
-      setContenu("");
+      setModalCommOuverte(false);
     } catch (err) {
       setErreur(err instanceof Error ? err.message : "Erreur");
-    }
-  }
-
-  function choisirCibleBadge(badge: NiveauBadge) {
-    setCibleBadge(badge);
-    if (!contenu.trim()) {
-      setContenu(messageSollicitation[badge]);
     }
   }
 
@@ -177,20 +169,17 @@ export default function Home() {
       {section === "plan" ? (
         <SectionPlanDeComm
           communications={communications}
+          campagnes={campagnes}
           erreur={erreur}
-          profil={profil}
-          cibleBadge={cibleBadge}
-          date={date}
-          canal={canal}
-          contenu={contenu}
           regles={regles}
           plafondEmails={plafondEmails}
-          setProfil={setProfil}
-          choisirCibleBadge={choisirCibleBadge}
-          setDate={setDate}
-          setCanal={setCanal}
-          setContenu={setContenu}
-          soumettreAjout={soumettreAjout}
+          modalOuverte={modalCommOuverte}
+          ouvrirModal={() => setModalCommOuverte(true)}
+          fermerModal={() => {
+            setModalCommOuverte(false);
+            setErreur(null);
+          }}
+          soumettre={soumettreCommunication}
           deplacer={deplacer}
         />
       ) : section === "donateurs" ? (
@@ -224,79 +213,35 @@ export default function Home() {
 
 function SectionPlanDeComm(props: {
   communications: Communication[];
+  campagnes: Campagne[];
   erreur: string | null;
-  profil: Profil;
-  cibleBadge: NiveauBadge;
-  date: string;
-  canal: "email" | "sms";
-  contenu: string;
   regles: ReglesBadges;
   plafondEmails: number;
-  setProfil: (p: Profil) => void;
-  choisirCibleBadge: (b: NiveauBadge) => void;
-  setDate: (d: string) => void;
-  setCanal: (c: "email" | "sms") => void;
-  setContenu: (c: string) => void;
-  soumettreAjout: (e: React.FormEvent) => void;
+  modalOuverte: boolean;
+  ouvrirModal: () => void;
+  fermerModal: () => void;
+  soumettre: (nouvelle: {
+    profil: Profil;
+    cibleBadge: NiveauBadge;
+    campagneId?: string;
+    date: string;
+    canal: "email" | "sms";
+    contenu: string;
+  }) => void;
   deplacer: (id: string, date: string) => void;
 }) {
   const parSemaine = [...regrouperParSemaine(props.communications).entries()].sort(([a], [b]) =>
     a.localeCompare(b),
   );
+  const campagnesParId = new Map(props.campagnes.map((c) => [c.id, c]));
 
   return (
     <section className={styles.section}>
-      <form className={styles.carte} onSubmit={props.soumettreAjout}>
-        <div className={styles.formLigne}>
-          <select
-            className={styles.champ}
-            value={props.profil}
-            onChange={(e) => props.setProfil(e.target.value as Profil)}
-          >
-            {Object.entries(libellesProfil).map(([valeur, libelle]) => (
-              <option key={valeur} value={valeur}>
-                {libelle}
-              </option>
-            ))}
-          </select>
-          <input
-            className={styles.champ}
-            type="date"
-            value={props.date}
-            onChange={(e) => props.setDate(e.target.value)}
-          />
-          <select
-            className={styles.champ}
-            value={props.canal}
-            onChange={(e) => props.setCanal(e.target.value as "email" | "sms")}
-          >
-            <option value="email">Email</option>
-            <option value="sms">SMS</option>
-          </select>
-          <select
-            className={styles.champ}
-            value={props.cibleBadge}
-            onChange={(e) => props.choisirCibleBadge(e.target.value as NiveauBadge)}
-          >
-            {Object.entries(libellesBadge).map(([valeur, libelle]) => (
-              <option key={valeur} value={valeur}>
-                Badge {libelle}
-              </option>
-            ))}
-          </select>
-          <input
-            className={styles.champLarge}
-            type="text"
-            placeholder="Contenu de la communication"
-            value={props.contenu}
-            onChange={(e) => props.setContenu(e.target.value)}
-          />
-          <button type="submit" className={styles.boutonPrimaire}>
-            Ajouter
-          </button>
-        </div>
-        {props.erreur && <div className={styles.erreur}>{props.erreur}</div>}
-      </form>
+      <div className={styles.formLigne} style={{ marginBottom: "1rem" }}>
+        <button type="button" className={styles.boutonPrimaire} onClick={props.ouvrirModal}>
+          + Nouvelle communication
+        </button>
+      </div>
 
       {parSemaine.map(([semaine, comms]) => (
         <section key={semaine} className={styles.semaine}>
@@ -311,6 +256,11 @@ function SectionPlanDeComm(props: {
                   <span className={`${styles.tagBadge} ${styles[`badge-${comm.cibleBadge}`]}`}>
                     {libellesBadge[comm.cibleBadge]}
                   </span>
+                  {comm.campagneId && campagnesParId.get(comm.campagneId) && (
+                    <span className={styles.tag}>
+                      Campagne : {campagnesParId.get(comm.campagneId)?.nom}
+                    </span>
+                  )}
                   <span className={styles.tag}>
                     {
                       calculerDestinataires(donateurs, props.regles, comm.cibleBadge, props.plafondEmails)
@@ -331,7 +281,164 @@ function SectionPlanDeComm(props: {
           </ul>
         </section>
       ))}
+
+      {props.modalOuverte && (
+        <ModalCommunication
+          campagnes={props.campagnes}
+          erreur={props.erreur}
+          fermer={props.fermerModal}
+          soumettre={props.soumettre}
+        />
+      )}
     </section>
+  );
+}
+
+function ModalCommunication(props: {
+  campagnes: Campagne[];
+  erreur: string | null;
+  fermer: () => void;
+  soumettre: (nouvelle: {
+    profil: Profil;
+    cibleBadge: NiveauBadge;
+    campagneId?: string;
+    date: string;
+    canal: "email" | "sms";
+    contenu: string;
+  }) => void;
+}) {
+  const [profil, setProfil] = useState<Profil>("nouveau");
+  const [cibleBadge, setCibleBadge] = useState<NiveauBadge>("bronze");
+  const [campagneId, setCampagneId] = useState("");
+  const [date, setDate] = useState("");
+  const [canal, setCanal] = useState<"email" | "sms">("email");
+  const [contenu, setContenu] = useState("");
+
+  function choisirCampagne(id: string) {
+    setCampagneId(id);
+    const campagne = props.campagnes.find((c) => c.id === id);
+    if (campagne) {
+      if (campagne.ciblesBadges[0]) {
+        setCibleBadge(campagne.ciblesBadges[0]);
+      }
+      setContenu(campagne.contenu);
+    }
+  }
+
+  function choisirCibleBadge(badge: NiveauBadge) {
+    setCibleBadge(badge);
+    if (!contenu.trim()) {
+      setContenu(messageSollicitation[badge]);
+    }
+  }
+
+  return (
+    <div className={styles.modalFond} onClick={props.fermer}>
+      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.carteTitre}>Nouvelle communication</div>
+
+        <label className={styles.champLabel}>
+          Profil
+          <select
+            className={styles.champ}
+            value={profil}
+            onChange={(e) => setProfil(e.target.value as Profil)}
+          >
+            {Object.entries(libellesProfil).map(([valeur, libelle]) => (
+              <option key={valeur} value={valeur}>
+                {libelle}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className={styles.champLabel}>
+          Campagne (optionnelle)
+          <select
+            className={styles.champ}
+            value={campagneId}
+            onChange={(e) => choisirCampagne(e.target.value)}
+          >
+            <option value="">Aucune</option>
+            {props.campagnes.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.nom}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className={styles.champLabel}>
+          Badge cible
+          <select
+            className={styles.champ}
+            value={cibleBadge}
+            onChange={(e) => choisirCibleBadge(e.target.value as NiveauBadge)}
+          >
+            {Object.entries(libellesBadge).map(([valeur, libelle]) => (
+              <option key={valeur} value={valeur}>
+                {libelle}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className={styles.champLabel}>
+          Canal
+          <select
+            className={styles.champ}
+            value={canal}
+            onChange={(e) => setCanal(e.target.value as "email" | "sms")}
+          >
+            <option value="email">Email</option>
+            <option value="sms">SMS</option>
+          </select>
+        </label>
+
+        <label className={styles.champLabel}>
+          Date
+          <input
+            className={styles.champ}
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+          />
+        </label>
+
+        <label className={styles.champLabel}>
+          Contenu
+          <textarea
+            className={styles.champLarge}
+            value={contenu}
+            onChange={(e) => setContenu(e.target.value)}
+          />
+        </label>
+
+        {props.erreur && <div className={styles.erreur}>{props.erreur}</div>}
+
+        <div className={styles.formLigne}>
+          <button
+            type="button"
+            className={styles.boutonPrimaire}
+            onClick={() =>
+              props.soumettre({
+                profil,
+                cibleBadge,
+                campagneId: campagneId || undefined,
+                date,
+                canal,
+                contenu,
+              })
+            }
+          >
+            Ajouter
+          </button>
+          <button type="button" className={styles.boutonSecondaire} onClick={props.fermer}>
+            Annuler
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 

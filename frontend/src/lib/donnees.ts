@@ -14,6 +14,7 @@ export type Communication = {
   id: string;
   profil: Profil;
   cibleBadge: NiveauBadge;
+  campagneId?: string;
   date: string;
   canal: "email" | "sms";
   contenu: string;
