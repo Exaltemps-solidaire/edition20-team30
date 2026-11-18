@@ -84,9 +84,49 @@
 
 **Replanification après l'itération 2** : codage et publication très rapides (~3 minutes au total), capacité réelle bien supérieure à l'estimation initiale de ~25 min/itération une fois la plateforme chaude. Avec moins de 30 minutes annoncées en début d'itération, il reste probablement de la marge pour une itération 3 ciblée — à reconfirmer en demandant le temps restant au début de `/iteration 3`. Priorité proposée pour la suite : la détection de conflits (point 2 ci-dessous), qui porte l'hypothèse mesurée par l'équipe, plutôt que les règles de fréquence seules — à valider par les cadreurs (⚠️).
 
+## Itération 3 : Badges donateurs (bronze/argent/or) — calcul, écran Donateurs, règles éditables, filtre
+
+- **Temps restant annoncé** : moins de 30 minutes, demandé le 2026-11-18 à 17:10.
+- **❓ Écart de passation** : « badge », « bronze », « argent » n'apparaissent dans aucun document de la passation (`cadrage/`, `contexte/`, `PASSATION.md`). Ce n'est pas une fonctionnalité demandée par l'association mais une idée nouvelle du développeur. **Décision explicite du développeur** : coder quand même pour le pitch, validation avec les cadreurs au prochain tour de test PM Lab — à leur signaler clairement, ce n'est pas acquis côté association.
+- **❓ Modèle de données** : l'app n'avait que des personas (équipe interne) et des communications (messages envoyés), aucune notion de donateur avec historique de dons. **Décision** : nouvelle entité `Donateur` (nom, nombre de dons, montant annuel), données d'exemple en dur, nouvel écran dédié — distinct des personas.
+- **✂️ Flag de découpage** : la demande combine calcul des badges + sectionnement de l'app + UI d'édition des règles de badge + filtre, soit 4 objectifs pour une itération. Proposé de réduire à « calcul + affichage » seul ; **le développeur a choisi explicitement de tout combiner**, malgré le temps restant annoncé (<30 min, soit une marge très faible). Risque assumé : si le budget de 10 minutes est dépassé, priorité donnée dans l'ordre calcul → affichage → sectionnement → filtre → édition des règles (du plus structurant au plus accessoire).
+- **Interprétation du « sectionnement »** (pas de précision donnée, jugement de l'agent à confirmer) : séparer l'app en sections navigables — onglets « Plan de comm » / « Donateurs » après le choix de persona — plutôt qu'un seul écran qui s'enchaîne.
+- **Dans le périmètre** :
+  - Règle de badge, en dur par défaut mais éditable : bronze (1 à 5 dons), argent (6 à 15 dons OU 100 €/an), or (16 dons ou plus OU 2000 €/an ou plus) — logique pure, testable.
+  - Écran « Donateurs » (nouvel onglet) : liste de donateurs d'exemple avec leur badge calculé et affiché.
+  - Filtre par badge (tous/bronze/argent/or) sur cette liste.
+  - Panneau d'édition des seuils des 3 badges, avec validation (ordre des seuils cohérent), recalcul immédiat des badges affichés.
+- **Hors périmètre** : persistance des règles ou des donateurs côté API, lien entre badge et Plan de comm (ex. cibler une communication par badge — pourrait être une itération suivante), suppression/ajout de donateurs.
+- **Critères d'acceptation** :
+  - Étant donné un donateur avec son nombre de dons et son montant annuel, quand son badge est calculé, alors il correspond à la règle (bronze/argent/or) y compris quand c'est le montant plutôt que le nombre de dons qui qualifie.
+  - Étant donné l'écran Donateurs affiché, quand on choisit un badge dans le filtre, alors seuls les donateurs de ce badge restent visibles.
+  - Étant donné le panneau de règles, quand on modifie un seuil avec une valeur incohérente (ex. seuil argent ≤ seuil bronze), alors une erreur s'affiche et les badges ne changent pas.
+- **Hypothèse de l'équipe couverte** : aucune — fonctionnalité hors passation (cf. ❓ ci-dessus).
+- **Codage estimé** : 10 minutes (risque de dépassement assumé, cf. flag ✂️)
+- **Fichiers prévus** : `frontend/src/lib/donateurs.ts` (nouveau), `frontend/src/lib/badges.ts` (nouveau), `frontend/src/app/page.tsx`, `frontend/src/app/page.module.css` — 4 fichiers hors tests
+- **Tests unitaires prévus** : 2 à 3 tests Vitest sur `calculerBadge` (seuil par nombre de dons, seuil par montant, cas limite) et/ou la validation des règles
+- **Étapes ajoutées à la démo** : passage sur l'onglet Donateurs, filtre par badge
+- **Bilan** :
+  - Durée de codage réelle : 1 minute (17:10 → 17:11), aucun dépassement — les 4 objectifs combinés ont quand même tenu largement dans le budget.
+  - Critères d'acceptation : les 3 satisfaits — `calculerBadge` qualifie par nombre de dons et par montant annuel (testé), le filtre par badge masque les autres niveaux (vérifié par la démo Playwright : Jean Petit visible, Amélie Rousseau non, sur le filtre « or »), le panneau de règles refuse un seuil incohérent et n'applique pas le changement (`validerRegles`, testé).
+  - Reporté : rien de nouveau. Hors périmètre dès le départ : persistance des règles/donateurs côté API, lien badge ↔ Plan de comm (ajouté en « À venir »).
+  - Ce que le harnais a signalé : `verifier-deployabilite.sh` propre. Pas de refus de signalement.
+  - Publication : seul le frontend reconstruit (API inchangée), rapide comme à l'itération 2.
+  - **Incident de démo (résolu dans le budget de publication)** : le premier test Playwright ciblait `getByText("Or", { exact: true })`, qui matchait aussi l'`<option>` caché du filtre — échec `toBeVisible`. Corrigé en scopant la recherche au `<li>` du donateur concerné (`Jean Petit`).
+  - **⚠️ Rappel pour le tour de test PM Lab** : les badges sont une fonctionnalité hors passation (cf. ❓ en tête de section), à faire valider explicitement par les cadreurs — ce n'est pas un acquis de l'association.
+  - **Modifications** :
+    - `frontend/src/lib/badges.ts` + `badges.test.ts` : calcul du badge (dons ou montant) et validation des seuils — sert les critères 1 et 3.
+    - `frontend/src/lib/donateurs.ts` : données d'exemple couvrant les 3 badges — sert le critère 1.
+    - `frontend/src/app/page.tsx` : onglets Plan de comm/Donateurs (sectionnement), écran Donateurs avec panneau de règles et filtre — sert les 3 critères.
+    - `frontend/src/app/page.module.css` : styles des onglets, du panneau de règles et des badges (bronze/argent/or) — support visuel des critères 1 et 2.
+    - `e2e/demo.spec.ts` : étapes de consultation des badges et de filtre.
+
+**Replanification après l'itération 3** : codage très rapide à nouveau (~1 minute), la contrainte reste le temps restant annoncé en dehors du codage (publication + tour de test), pas le budget de 10 minutes. À redemander en début d'itération 4. Les badges n'étant pas dans la passation, la priorité reste la détection de conflits pour couvrir l'hypothèse mesurée par l'équipe — sauf si les cadreurs valident les badges et demandent de les approfondir en premier (⚠️ à confirmer avec eux).
+
 ## À venir (non détaillé, à affiner au fil de l'eau)
 
 1. Détection de conflits (Alertes) : signaler les semaines où un donateur recevrait plusieurs emails, permettre de déplacer/désactiver l'envoi en conflit — **porte l'hypothèse mesurée par l'équipe**. Priorité proposée (⚠️ à valider).
 2. Règles de fréquence par profil : définir une règle (ex. 1 email/semaine max), l'afficher et l'appliquer au calendrier.
 3. Vue hebdomadaire consolidée du Plan de comm (vérifier qu'aucun donateur ne reçoit plus d'un email sur une semaine donnée).
-4. Stabilisation finale pour le pitch, si le temps restant ne permet plus qu'une itération.
+4. Lien entre badge donateur et Plan de comm (ex. filtrer/cibler une communication par badge), si l'association valide la fonctionnalité badges.
+5. Stabilisation finale pour le pitch, si le temps restant ne permet plus qu'une itération.

@@ -31,4 +31,18 @@ test("Démo : le cas passant", async ({ page }) => {
     await champDate.fill("2026-12-20");
     await expect(page.getByText("Semaine du 2026-12-14")).toBeVisible();
   });
+
+  await test.step("Je vois les badges des donateurs", async () => {
+    await page.getByRole("button", { name: "Donateurs" }).click();
+    await expect(page.getByRole("heading", { name: "Donateurs" })).toBeVisible();
+    await expect(
+      page.locator("li").filter({ hasText: "Jean Petit" }).getByText("Or", { exact: true }),
+    ).toBeVisible();
+  });
+
+  await test.step("Je filtre par badge", async () => {
+    await page.getByLabel("Filtrer par badge").selectOption("or");
+    await expect(page.getByText("Jean Petit")).toBeVisible();
+    await expect(page.getByText("Amélie Rousseau")).toHaveCount(0);
+  });
 });

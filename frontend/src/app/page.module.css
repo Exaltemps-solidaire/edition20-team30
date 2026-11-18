@@ -186,3 +186,89 @@
 .champDate {
   padding: 0.3rem 0.5rem;
 }
+
+.onglets {
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: 1px solid var(--ant-border);
+  margin-bottom: 1.5rem;
+}
+
+.onglet,
+.ongletActif {
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: 0.95rem;
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+  color: var(--ant-text-secondary);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.onglet:hover {
+  color: var(--ant-text);
+}
+
+.ongletActif {
+  color: var(--ant-primary);
+  border-bottom-color: var(--ant-primary);
+  font-weight: 500;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.carteTitre {
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.champLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--ant-text-secondary);
+}
+
+.champNombre {
+  width: 4.5rem;
+  border: 1px solid var(--ant-border);
+  border-radius: var(--ant-radius-sm);
+  padding: 0.3rem 0.5rem;
+  font-family: inherit;
+  color: var(--ant-text);
+}
+
+.tagBadge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--ant-radius-sm);
+  padding: 0.1rem 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge-bronze {
+  background: #fff1e6;
+  color: #ad4e00;
+  border: 1px solid #ffd6a8;
+}
+
+.badge-argent {
+  background: #f0f0f0;
+  color: #595959;
+  border: 1px solid #d9d9d9;
+}
+
+.badge-or {
+  background: #fffbe6;
+  color: #874d00;
+  border: 1px solid #ffe58f;
+}
