@@ -16,4 +16,19 @@ test("Démo : le cas passant", async ({ page }) => {
     await expect(page.getByRole("heading", { name: "Plan de comm" })).toBeVisible();
     await expect(page.getByText("Semaine du").first()).toBeVisible();
   });
+
+  await test.step("J'ajoute une communication", async () => {
+    await page.getByPlaceholder("Contenu de la communication").fill("Invitation à l'événement annuel");
+    await page.locator('input[type="date"]').first().fill("2026-12-15");
+    await page.getByRole("button", { name: "Ajouter" }).click();
+    await expect(page.getByText("Invitation à l'événement annuel")).toBeVisible();
+  });
+
+  await test.step("Je déplace une communication", async () => {
+    const champDate = page
+      .locator("li", { hasText: "Invitation à l'événement annuel" })
+      .locator('input[type="date"]');
+    await champDate.fill("2026-12-20");
+    await expect(page.getByText("Semaine du 2026-12-14")).toBeVisible();
+  });
 });

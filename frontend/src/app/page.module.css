@@ -1,9 +1,15 @@
 .page {
   min-height: 100vh;
   padding: 2rem;
-  font-family: system-ui, sans-serif;
-  color: #1b1b1f;
-  background: #fafafa;
+  font-family: var(--ant-font);
+  color: var(--ant-text);
+  background: var(--ant-bg-layout);
+}
+
+.titre {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0 0 1rem;
 }
 
 .entete {
@@ -14,16 +20,41 @@
 }
 
 .personaActuel {
-  font-size: 0.95rem;
-  color: #444;
+  font-size: 0.9rem;
+  color: var(--ant-text-secondary);
 }
 
-.boutonChangerPersona {
-  border: 1px solid #c9c9d0;
+.boutonSecondaire {
+  border: 1px solid var(--ant-border);
   background: #fff;
-  border-radius: 0.4rem;
-  padding: 0.4rem 0.8rem;
+  color: var(--ant-text);
+  border-radius: var(--ant-radius-sm);
+  padding: 0.4rem 1rem;
+  font-size: 0.9rem;
   cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.boutonSecondaire:hover {
+  color: var(--ant-primary);
+  border-color: var(--ant-primary);
+}
+
+.boutonPrimaire {
+  border: none;
+  background: var(--ant-primary);
+  color: #fff;
+  border-radius: var(--ant-radius-sm);
+  padding: 0.5rem 1.2rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 2px 0 rgba(5, 145, 255, 0.1);
+  transition: background 0.15s;
+}
+
+.boutonPrimaire:hover {
+  background: var(--ant-primary-hover);
 }
 
 .listePersonas {
@@ -33,13 +64,68 @@
   max-width: 28rem;
 }
 
-.carteBersona {
+.cartePersona {
   text-align: left;
-  border: 1px solid #c9c9d0;
+  border: 1px solid var(--ant-border);
   background: #fff;
-  border-radius: 0.5rem;
-  padding: 1rem;
+  border-radius: var(--ant-radius);
+  padding: 1rem 1.25rem;
   cursor: pointer;
+  box-shadow: var(--ant-shadow);
+  font-family: inherit;
+  color: var(--ant-text);
+  transition: border-color 0.15s;
+}
+
+.cartePersona:hover {
+  border-color: var(--ant-primary);
+}
+
+.carte {
+  background: #fff;
+  border: 1px solid var(--ant-border);
+  border-radius: var(--ant-radius);
+  box-shadow: var(--ant-shadow);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.formLigne {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.champ,
+.champLarge,
+.champDate {
+  border: 1px solid var(--ant-border);
+  border-radius: var(--ant-radius-sm);
+  padding: 0.4rem 0.7rem;
+  font-size: 0.9rem;
+  font-family: inherit;
+  color: var(--ant-text);
+  background: #fff;
+}
+
+.champ:focus,
+.champLarge:focus,
+.champDate:focus {
+  outline: none;
+  border-color: var(--ant-primary);
+  box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.15);
+}
+
+.champLarge {
+  flex: 1;
+  min-width: 12rem;
+}
+
+.erreur {
+  margin-top: 0.6rem;
+  color: #d4380d;
+  font-size: 0.85rem;
 }
 
 .semaine {
@@ -49,6 +135,7 @@
 .semaineTitre {
   font-weight: 600;
   margin-bottom: 0.5rem;
+  color: var(--ant-text);
 }
 
 .listeComms {
@@ -60,13 +147,42 @@
 }
 
 .comm {
-  border: 1px solid #e0e0e6;
-  border-radius: 0.5rem;
+  border: 1px solid var(--ant-border);
+  border-radius: var(--ant-radius);
   padding: 0.75rem 1rem;
   background: #fff;
+  box-shadow: var(--ant-shadow);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.commContenu {
+  color: var(--ant-text);
 }
 
 .commMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   font-size: 0.85rem;
-  color: #555;
+  color: var(--ant-text-secondary);
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #91caff;
+  background: #e6f4ff;
+  color: #0958d9;
+  border-radius: var(--ant-radius-sm);
+  padding: 0.1rem 0.5rem;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.champDate {
+  padding: 0.3rem 0.5rem;
 }

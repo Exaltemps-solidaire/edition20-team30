@@ -48,24 +48,45 @@
 
 **Replanification après l'itération 1** : la publication a pris nettement plus que les ~5 minutes estimées (démarrage à froid de la plateforme + contournement du rate-limit Docker Hub, voir bilan ci-dessus), consommant une bonne partie des 45 minutes annoncées. Ces deux coûts ne se répéteront pas (plateforme déjà démarrée, images de base déjà en cache local et sur le miroir ECR) : la publication de l'itération 2 devrait se rapprocher des ~5 minutes prévues. Capacité révisée à redemander en début d'itération 2.
 
-## Itération 2 : Le plan de comm devient réel — ajouter ou déplacer une communication
+## Itération 2 : Le plan de comm devient réel (ajouter/déplacer une communication) + habillage visuel inspiré d'Ant Design
 
-- **Dans le périmètre** : sur l'écran Plan de comm, ajouter une communication (profil, date, canal) et déplacer une communication existante à une autre date ; persistance au minimum en mémoire côté API pour tenir la démo.
-- **Hors périmètre** : règles de fréquence, détection de conflits, détail d'une comm en écran séparé (peut rester une simple vue inline si le temps le permet), persistance durable en base (hors périmètre du hackathon sauf si trivial).
+- **Temps restant annoncé** : moins de 30 minutes, demandé le 2026-11-18 à 17:05.
+- **✂️ Flag de découpage** : cette itération combine deux objectifs (interactivité + style), ce qui dépasse la règle « un seul objectif par itération ». Proposé de scinder en deux itérations (style seul maintenant, interactivité en itération 3, ou l'inverse) ; **le développeur a choisi explicitement de les combiner** malgré le temps restant annoncé (<30 min, soit une seule itération complète de marge). Risque assumé : si le budget de 10 minutes de codage est dépassé, priorité donnée à finir le style (visible immédiatement) plutôt que l'interactivité.
+- **❗️ Déviation du plan initial** : pour tenir le budget, la persistance reste **en mémoire côté frontend** (état React), pas côté API comme prévu initialement — perdue au rechargement de la page. Aucun appel réseau nouveau n'est introduit. À remettre en question si la démo doit survivre à un rafraîchissement de page.
+- **❗️ Pas de dépendance nouvelle** : le style « inspiré d'Ant Design » est réalisé en CSS pur (palette, rayons, ombres, typographie système), sans installer le paquet `antd` — une dépendance React supplémentaire dans un export statique n'aurait pas tenu dans 10 minutes et n'était pas demandée explicitement.
+- **Dans le périmètre** :
+  - Sur l'écran Plan de comm : formulaire d'ajout d'une communication (profil, date, canal, contenu) et déplacement d'une communication existante à une autre date, avec logique de validation extraite en fonctions pures testables.
+  - Sur les deux écrans existants (persona, Plan de comm) : palette, boutons, cartes, badges et typographie inspirés d'Ant Design (bleu primaire `#1677ff`, rayons 6-8px, ombres légères, pile de polices système).
+- **Hors périmètre** : règles de fréquence, détection de conflits, détail d'une comm en écran séparé, persistance durable (API/base), paquet `antd`.
 - **Critères d'acceptation** :
-  - Étant donné le Plan de comm affiché, quand le responsable communication ajoute une communication (profil, date, canal), alors elle apparaît dans le calendrier sans recharger la page manuellement.
-  - Étant donné une communication existante, quand le responsable communication la déplace à une autre date, alors le calendrier reflète la nouvelle date.
-  - Étant donné deux communications ajoutées pour des profils différents, quand on revient sur le calendrier, alors les deux restent visibles avec leurs attributs corrects.
+  - Étant donné le Plan de comm affiché, quand le responsable communication ajoute une communication (profil, date, canal, contenu valides), alors elle apparaît dans le calendrier sans recharger la page.
+  - Étant donné une communication existante, quand le responsable communication la déplace à une autre date, alors le calendrier reflète la nouvelle date sans toucher aux autres communications.
+  - Étant donné les deux écrans (persona, Plan de comm), quand on les affiche, alors ils partagent une palette et des composants visuellement cohérents inspirés d'Ant Design.
 - **Hypothèse de l'équipe couverte** : aucune directement — prépare la mesure de l'itération suivante (détection de conflits).
-- **Codage estimé** : 10 minutes
-- **Fichiers prévus** : `api/src/routes.ts` (ou nouveau module de routes `/api/v1/communications`), le composant Plan de comm (formulaire d'ajout, glisser/choisir une date), le fichier de données partagé (~4-5 fichiers)
-- **Tests unitaires prévus** : 1 à 3 tests Vitest sur la logique d'ajout/déplacement (validation des champs, pas de doublon trivial)
+- **Codage estimé** : 10 minutes (risque de dépassement assumé, cf. flag ✂️ ci-dessus)
+- **Fichiers prévus** : `frontend/src/lib/communications.ts` (nouveau, logique pure), `frontend/src/app/page.tsx`, `frontend/src/app/page.module.css`, `frontend/src/app/globals.css` (jetons de couleur partagés) — 4 fichiers hors tests
+- **Tests unitaires prévus** : 2 à 3 tests Vitest sur `ajouterCommunication`/`deplacerCommunication` (validation des champs, non-régression des autres éléments)
 - **Étapes ajoutées à la démo** : ajout d'une communication, déplacement d'une communication
-- **Bilan** : _à remplir en fin d'itération_
+- **Bilan** :
+  - Durée de codage réelle : 1 minute (17:05 → 17:06), aucun dépassement — malgré le cumul des deux objectifs, aucune alarme des 8 minutes déclenchée.
+  - Critères d'acceptation : les 3 satisfaits (ajout visible sans rechargement, déplacement reflété sans affecter les autres éléments, palette/composants cohérents inspirés d'Ant Design sur les deux écrans) — vérifiés par `npm test` (7 tests, dont 3 nouveaux sur `ajouterCommunication`/`deplacerCommunication`) et par la démo Playwright rejouée contre `localhost:8080` (ajout + déplacement en conditions réelles de navigateur).
+  - Reporté : rien de nouveau. Les reports déjà actés (règles de fréquence, détection de conflits) restent en « À venir ».
+  - Ce que le harnais a signalé : `verifier-deployabilite.sh` propre (aucune borne, aucune alarme). Pas de refus de signalement.
+  - Publication : nettement plus rapide que l'itération 1, comme anticipé (plateforme déjà démarrée, images de base déjà en cache/sur le miroir ECR) — seul le frontend a été reconstruit (l'API n'a pas changé ce tour-ci).
+  - **Déviations assumées, à suivre** :
+    - Persistance en mémoire côté frontend seulement (perdue au rechargement) — acceptable pour la démo, à revoir si une itération future a besoin de survivre à un refresh ou d'être partagée entre personas.
+    - Pas de paquet `antd` installé : le style est du CSS pur inspiré de sa palette par défaut, pas le composant-kit réel. À signaler si l'équipe attendait la bibliothèque elle-même plutôt qu'un look inspiré.
+  - **Modifications** :
+    - `frontend/src/lib/communications.ts` + `communications.test.ts` : logique pure d'ajout/déplacement avec validation — sert les critères 1 et 2.
+    - `frontend/src/app/page.tsx` : formulaire d'ajout, champ de date par communication pour la déplacer, état React pour la liste — sert les critères 1 et 2.
+    - `frontend/src/app/page.module.css`, `frontend/src/app/globals.css` : jetons de couleur/rayon/ombre inspirés d'Ant Design, restylage des cartes, boutons, champs, badges — sert le critère 3.
+    - `e2e/demo.spec.ts` : étapes d'ajout et de déplacement d'une communication.
+
+**Replanification après l'itération 2** : codage et publication très rapides (~3 minutes au total), capacité réelle bien supérieure à l'estimation initiale de ~25 min/itération une fois la plateforme chaude. Avec moins de 30 minutes annoncées en début d'itération, il reste probablement de la marge pour une itération 3 ciblée — à reconfirmer en demandant le temps restant au début de `/iteration 3`. Priorité proposée pour la suite : la détection de conflits (point 2 ci-dessous), qui porte l'hypothèse mesurée par l'équipe, plutôt que les règles de fréquence seules — à valider par les cadreurs (⚠️).
 
 ## À venir (non détaillé, à affiner au fil de l'eau)
 
-1. Règles de fréquence par profil : définir une règle (ex. 1 email/semaine max), l'afficher et l'appliquer au calendrier.
-2. Détection de conflits (Alertes) : signaler les semaines où un donateur recevrait plusieurs emails, permettre de déplacer/désactiver l'envoi en conflit — **porte l'hypothèse mesurée par l'équipe**.
+1. Détection de conflits (Alertes) : signaler les semaines où un donateur recevrait plusieurs emails, permettre de déplacer/désactiver l'envoi en conflit — **porte l'hypothèse mesurée par l'équipe**. Priorité proposée (⚠️ à valider).
+2. Règles de fréquence par profil : définir une règle (ex. 1 email/semaine max), l'afficher et l'appliquer au calendrier.
 3. Vue hebdomadaire consolidée du Plan de comm (vérifier qu'aucun donateur ne reçoit plus d'un email sur une semaine donnée).
 4. Stabilisation finale pour le pitch, si le temps restant ne permet plus qu'une itération.
