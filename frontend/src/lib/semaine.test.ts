@@ -12,9 +12,9 @@ describe("lundiDeLaSemaine", () => {
 describe("regrouperParSemaine", () => {
   it("regroupe les communications de la même semaine ensemble", () => {
     const communications: Communication[] = [
-      { id: "c1", profil: "nouveau", date: "2026-11-23", canal: "email", contenu: "a" },
-      { id: "c2", profil: "reactiver", date: "2026-11-25", canal: "email", contenu: "b" },
-      { id: "c3", profil: "prelevement", date: "2026-11-30", canal: "email", contenu: "c" },
+      { id: "c1", profil: "nouveau", cibleBadge: "bronze", date: "2026-11-23", canal: "email", contenu: "a" },
+      { id: "c2", profil: "reactiver", cibleBadge: "argent", date: "2026-11-25", canal: "email", contenu: "b" },
+      { id: "c3", profil: "prelevement", cibleBadge: "or", date: "2026-11-30", canal: "email", contenu: "c" },
     ];
     const parSemaine = regrouperParSemaine(communications);
     expect(parSemaine.get("2026-11-23")).toHaveLength(2);

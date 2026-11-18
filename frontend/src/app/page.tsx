@@ -12,10 +12,13 @@ import {
 } from "../lib/donnees";
 import { regrouperParSemaine } from "../lib/semaine";
 import { ajouterCommunication, deplacerCommunication } from "../lib/communications";
-import { donateurs } from "../lib/donateurs";
+import { donateurs, plafondEmailsParDefaut } from "../lib/donateurs";
 import {
+  aAtteintLePlafond,
   calculerBadge,
+  calculerDestinataires,
   libellesBadge,
+  messageSollicitation,
   reglesParDefaut,
   validerRegles,
   type NiveauBadge,
@@ -32,6 +35,7 @@ export default function Home() {
   const [communications, setCommunications] = useState<Communication[]>(communicationsInitiales);
   const [erreur, setErreur] = useState<string | null>(null);
   const [profil, setProfil] = useState<Profil>("nouveau");
+  const [cibleBadge, setCibleBadge] = useState<NiveauBadge>("bronze");
   const [date, setDate] = useState("");
   const [canal, setCanal] = useState<"email" | "sms">("email");
   const [contenu, setContenu] = useState("");
@@ -40,6 +44,8 @@ export default function Home() {
   const [regles, setRegles] = useState<ReglesBadges>(reglesParDefaut);
   const [erreurRegles, setErreurRegles] = useState<string | null>(null);
   const [filtreBadge, setFiltreBadge] = useState<NiveauBadge | "tous">("tous");
+  const [plafondEmails, setPlafondEmails] = useState(plafondEmailsParDefaut);
+  const [filtrePlafondAtteint, setFiltrePlafondAtteint] = useState(false);
 
   if (!persona) {
     return (
@@ -65,12 +71,21 @@ export default function Home() {
   function soumettreAjout(e: React.FormEvent) {
     e.preventDefault();
     try {
-      setCommunications(ajouterCommunication(communications, { profil, date, canal, contenu }));
+      setCommunications(
+        ajouterCommunication(communications, { profil, cibleBadge, date, canal, contenu }),
+      );
       setErreur(null);
       setDate("");
       setContenu("");
     } catch (err) {
       setErreur(err instanceof Error ? err.message : "Erreur");
+    }
+  }
+
+  function choisirCibleBadge(badge: NiveauBadge) {
+    setCibleBadge(badge);
+    if (!contenu.trim()) {
+      setContenu(messageSollicitation[badge]);
     }
   }
 
@@ -128,10 +143,14 @@ export default function Home() {
           communications={communications}
           erreur={erreur}
           profil={profil}
+          cibleBadge={cibleBadge}
           date={date}
           canal={canal}
           contenu={contenu}
+          regles={regles}
+          plafondEmails={plafondEmails}
           setProfil={setProfil}
+          choisirCibleBadge={choisirCibleBadge}
           setDate={setDate}
           setCanal={setCanal}
           setContenu={setContenu}
@@ -145,6 +164,10 @@ export default function Home() {
           filtreBadge={filtreBadge}
           setFiltreBadge={setFiltreBadge}
           modifierRegle={modifierRegle}
+          plafondEmails={plafondEmails}
+          setPlafondEmails={setPlafondEmails}
+          filtrePlafondAtteint={filtrePlafondAtteint}
+          setFiltrePlafondAtteint={setFiltrePlafondAtteint}
         />
       )}
     </div>
@@ -155,10 +178,14 @@ function SectionPlanDeComm(props: {
   communications: Communication[];
   erreur: string | null;
   profil: Profil;
+  cibleBadge: NiveauBadge;
   date: string;
   canal: "email" | "sms";
   contenu: string;
+  regles: ReglesBadges;
+  plafondEmails: number;
   setProfil: (p: Profil) => void;
+  choisirCibleBadge: (b: NiveauBadge) => void;
   setDate: (d: string) => void;
   setCanal: (c: "email" | "sms") => void;
   setContenu: (c: string) => void;
@@ -198,6 +225,17 @@ function SectionPlanDeComm(props: {
             <option value="email">Email</option>
             <option value="sms">SMS</option>
           </select>
+          <select
+            className={styles.champ}
+            value={props.cibleBadge}
+            onChange={(e) => props.choisirCibleBadge(e.target.value as NiveauBadge)}
+          >
+            {Object.entries(libellesBadge).map(([valeur, libelle]) => (
+              <option key={valeur} value={valeur}>
+                Badge {libelle}
+              </option>
+            ))}
+          </select>
           <input
             className={styles.champLarge}
             type="text"
@@ -222,6 +260,16 @@ function SectionPlanDeComm(props: {
                 <div className={styles.commMeta}>
                   <span className={styles.tag}>{libellesProfil[comm.profil]}</span>
                   <span className={styles.tag}>{comm.canal}</span>
+                  <span className={`${styles.tagBadge} ${styles[`badge-${comm.cibleBadge}`]}`}>
+                    {libellesBadge[comm.cibleBadge]}
+                  </span>
+                  <span className={styles.tag}>
+                    {
+                      calculerDestinataires(donateurs, props.regles, comm.cibleBadge, props.plafondEmails)
+                        .length
+                    }{" "}
+                    destinataire(s)
+                  </span>
                   <input
                     className={styles.champDate}
                     type="date"
@@ -245,6 +293,10 @@ function SectionDonateurs(props: {
   filtreBadge: NiveauBadge | "tous";
   setFiltreBadge: (b: NiveauBadge | "tous") => void;
   modifierRegle: (champ: keyof ReglesBadges, valeur: number) => void;
+  plafondEmails: number;
+  setPlafondEmails: (v: number) => void;
+  filtrePlafondAtteint: boolean;
+  setFiltrePlafondAtteint: (v: boolean) => void;
 }) {
   const donateursAvecBadge = useMemo(
     () =>
@@ -252,9 +304,9 @@ function SectionDonateurs(props: {
     [props.regles],
   );
 
-  const donateursFiltres = donateursAvecBadge.filter(
-    (d) => props.filtreBadge === "tous" || d.badge === props.filtreBadge,
-  );
+  const donateursFiltres = donateursAvecBadge
+    .filter((d) => props.filtreBadge === "tous" || d.badge === props.filtreBadge)
+    .filter((d) => !props.filtrePlafondAtteint || aAtteintLePlafond(d, props.plafondEmails));
 
   return (
     <section className={styles.section}>
@@ -328,6 +380,25 @@ function SectionDonateurs(props: {
             <option value="or">Or</option>
           </select>
         </label>
+        <label className={styles.champLabel}>
+          Plafond anti-spam
+          <input
+            className={styles.champNombre}
+            type="number"
+            min={0}
+            value={props.plafondEmails}
+            onChange={(e) => props.setPlafondEmails(Number(e.target.value))}
+          />
+          emails
+        </label>
+        <label className={styles.champLabel}>
+          <input
+            type="checkbox"
+            checked={props.filtrePlafondAtteint}
+            onChange={(e) => props.setFiltrePlafondAtteint(e.target.checked)}
+          />{" "}
+          Plafond atteint uniquement
+        </label>
       </div>
 
       <ul className={styles.listeComms}>
@@ -337,10 +408,14 @@ function SectionDonateurs(props: {
             <div className={styles.commMeta}>
               <span>{d.nombreDons} dons</span>
               <span>{d.montantAnnuel} €/an</span>
+              <span>{d.emailsRecus} email(s) reçu(s)</span>
               {d.badge && (
                 <span className={`${styles.tagBadge} ${styles[`badge-${d.badge}`]}`}>
                   {libellesBadge[d.badge]}
                 </span>
+              )}
+              {aAtteintLePlafond(d, props.plafondEmails) && (
+                <span className={styles.tagPlafond}>Plafond atteint</span>
               )}
             </div>
           </li>

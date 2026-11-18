@@ -8,6 +8,14 @@ export const libellesBadge: Record<NiveauBadge, string> = {
   or: "Or",
 };
 
+// Contenu par défaut proposé à la création d'une communication, selon le badge ciblé.
+export const messageSollicitation: Record<NiveauBadge, string> = {
+  bronze: "Chaque don compte : faites un nouveau don dès aujourd'hui pour soutenir nos actions.",
+  argent:
+    "Merci pour votre fidélité : votre soutien régulier change des vies, pensez à renouveler votre don.",
+  or: "Votre générosité exceptionnelle fait une vraie différence : merci d'envisager un don supplémentaire pour nos projets prioritaires.",
+};
+
 export type ReglesBadges = {
   bronzeDonsMin: number;
   argentDonsMin: number;
@@ -60,4 +68,21 @@ export function validerRegles(regles: ReglesBadges): string | null {
     return "Le seuil or (montant) doit être supérieur au seuil argent";
   }
   return null;
+}
+
+// Anti-spam : un donateur qui a déjà atteint le plafond d'emails reçus n'est plus un
+// destinataire éligible, même s'il correspond au badge ciblé.
+export function calculerDestinataires(
+  donateurs: Donateur[],
+  regles: ReglesBadges,
+  cibleBadge: NiveauBadge,
+  plafondEmails: number,
+): Donateur[] {
+  return donateurs.filter(
+    (d) => calculerBadge(d, regles) === cibleBadge && d.emailsRecus < plafondEmails,
+  );
+}
+
+export function aAtteintLePlafond(donateur: Donateur, plafondEmails: number): boolean {
+  return donateur.emailsRecus >= plafondEmails;
 }

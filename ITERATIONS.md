@@ -123,10 +123,48 @@
 
 **Replanification après l'itération 3** : codage très rapide à nouveau (~1 minute), la contrainte reste le temps restant annoncé en dehors du codage (publication + tour de test), pas le budget de 10 minutes. À redemander en début d'itération 4. Les badges n'étant pas dans la passation, la priorité reste la détection de conflits pour couvrir l'hypothèse mesurée par l'équipe — sauf si les cadreurs valident les badges et demandent de les approfondir en premier (⚠️ à confirmer avec eux).
 
+## Itération 4 : Cibler l'envoi des communications par badge, avec plafond anti-spam
+
+- **Temps restant annoncé** : 15 à 30 minutes, demandé le 2026-11-18 à 17:30.
+- **⚠️ Continuation d'une fonctionnalité hors passation** : cette itération approfondit les badges (cf. ❓ de l'itération 3, toujours non validé par les cadreurs). Même rappel : à faire confirmer au prochain tour de test, ce n'est pas une demande de l'association.
+- **Dans le périmètre** :
+  - Chaque communication programmée cible un badge (bronze/argent/or) plutôt qu'un profil générique.
+  - Anti-spam : chaque donateur a un nombre d'emails déjà reçus ; un plafond (réglable) exclut des destinataires calculés les donateurs qui l'ont atteint.
+  - Écran Donateurs : filtre supplémentaire pour repérer les donateurs au plafond.
+  - Contenu : les communications (existantes et nouvelles) sont formulées comme des sollicitations de don ; un contenu par défaut adapté au badge est proposé à la création (modifiable).
+- **Hors périmètre** : envoi réel des emails, ciblage individuel (un donateur précis plutôt qu'un badge entier), historique détaillé des envois par communication, persistance API.
+- **Critères d'acceptation** :
+  - Quand on crée une communication programmée, on choisit un badge cible (bronze/argent/or) ; un contenu par défaut de sollicitation de don adapté à ce badge est proposé et reste modifiable.
+  - Étant donné un plafond d'emails déjà reçus, quand un donateur l'a atteint, alors il est exclu du nombre de destinataires éligibles affiché pour toute communication ciblant son badge.
+  - Sur l'écran Donateurs, on peut filtrer les donateurs ayant atteint le plafond d'emails, en plus du filtre par badge existant.
+- **Hypothèse de l'équipe couverte** : aucune — prolonge une fonctionnalité hors passation (cf. ⚠️ ci-dessus).
+- **Codage estimé** : 10 minutes
+- **Fichiers prévus** : `frontend/src/lib/badges.ts` (destinataires éligibles + messages de sollicitation par badge), `frontend/src/lib/donateurs.ts` (champ emails reçus), `frontend/src/lib/donnees.ts` (badge cible par communication, contenu reformulé), `frontend/src/app/page.tsx`, `frontend/src/app/page.module.css` — 5 fichiers hors tests
+- **Tests unitaires prévus** : 2 à 3 tests Vitest sur le calcul des destinataires éligibles (filtre par badge, exclusion au plafond)
+- **Étapes ajoutées à la démo** : vérifier qu'un donateur au plafond n'est plus compté comme destinataire
+- **Bilan** :
+  - Durée de codage réelle : environ 5 minutes (chrono `.iterations/4.debut`/`.fin`), sous le plafond de 10 minutes — pas d'alarme à 8 minutes, pas d'arbitrage à demander.
+  - Critères d'acceptation : les 3 sont satisfaits — sélection du badge cible avec contenu par défaut de sollicitation modifiable, nombre de destinataires éligibles affiché par communication et qui exclut les donateurs au plafond, filtre « Plafond atteint uniquement » sur l'écran Donateurs.
+  - Ce que le harnais a bloqué ou refusé : rien. `verifier-deployabilite.sh` ne signale aucune borne, `npm test` passe (13 tests), le signal `version-prete 4` a été accepté par PM Lab sans blocage.
+  - Reporté : rien de nouveau dans cette itération. Les reports déjà actés (détection de conflits, règles de fréquence, vue hebdomadaire, envoi réel) restent en « À venir », inchangés.
+  - ⚠️ Rappel inchangé : les badges et leur ciblage restent une fonctionnalité hors passation (itérations 3 et 4), à faire valider explicitement par les cadreurs au prochain tour de test PM Lab.
+  - **Modifications** :
+    - `frontend/src/lib/badges.ts` — ajout de `messageSollicitation` (contenu par défaut par badge), `calculerDestinataires` (filtre badge + plafond anti-spam) et `aAtteintLePlafond` ; sert les 3 critères.
+    - `frontend/src/lib/donateurs.ts` — ajout du champ `emailsRecus` et de la constante `plafondEmailsParDefaut` ; sert le critère d'exclusion au plafond.
+    - `frontend/src/lib/donnees.ts` — ajout du champ obligatoire `cibleBadge` sur `Communication`, contenu des 4 communications d'exemple reformulé en sollicitations de don ; sert le critère de ciblage par badge.
+    - `frontend/src/lib/communications.test.ts`, `frontend/src/lib/semaine.test.ts`, `frontend/src/lib/badges.test.ts` — mise à jour des fixtures pour le nouveau champ `cibleBadge`/`emailsRecus`, et ajout de 3 tests Vitest sur `calculerDestinataires`/`aAtteintLePlafond`.
+    - `frontend/src/app/page.tsx` — sélecteur de badge cible et autofill du contenu dans le formulaire d'ajout, affichage du nombre de destinataires éligibles par communication, champ plafond et filtre « Plafond atteint uniquement » sur l'écran Donateurs.
+    - `frontend/src/app/page.module.css` — style `.tagPlafond` pour l'indicateur « Plafond atteint ».
+    - `e2e/demo.spec.ts` — étapes démo : filtre plafond anti-spam (Nadia Haddad visible, Jean Petit exclu) et ciblage d'une communication par badge.
+
+## Replanification après l'itération 4
+
+Le ciblage par badge et le plafond anti-spam sont en place et démontrables. Avec le temps restant annoncé (15 à 30 minutes au lancement de cette itération), et sans nouvelle demande du développeur, la priorité proposée reste la détection de conflits (item 1 ci-dessous) : elle porte l'hypothèse mesurée par l'équipe et n'a toujours pas été codée. ⚠️ Cette priorité reste à valider par les cadreurs, comme signalé après l'itération 2.
+
 ## À venir (non détaillé, à affiner au fil de l'eau)
 
 1. Détection de conflits (Alertes) : signaler les semaines où un donateur recevrait plusieurs emails, permettre de déplacer/désactiver l'envoi en conflit — **porte l'hypothèse mesurée par l'équipe**. Priorité proposée (⚠️ à valider).
 2. Règles de fréquence par profil : définir une règle (ex. 1 email/semaine max), l'afficher et l'appliquer au calendrier.
 3. Vue hebdomadaire consolidée du Plan de comm (vérifier qu'aucun donateur ne reçoit plus d'un email sur une semaine donnée).
-4. Lien entre badge donateur et Plan de comm (ex. filtrer/cibler une communication par badge), si l'association valide la fonctionnalité badges.
+4. Envoi réel / historique détaillé par communication (qui a reçu quoi), si le temps et le périmètre le permettent.
 5. Stabilisation finale pour le pitch, si le temps restant ne permet plus qu'une itération.

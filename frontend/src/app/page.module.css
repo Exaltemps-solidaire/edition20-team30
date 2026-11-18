@@ -272,3 +272,16 @@
   color: #874d00;
   border: 1px solid #ffe58f;
 }
+
+.tagPlafond {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--ant-radius-sm);
+  padding: 0.1rem 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+  background: #fff1f0;
+  color: #cf1322;
+  border: 1px solid #ffa39e;
+}

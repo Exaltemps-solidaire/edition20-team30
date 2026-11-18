@@ -45,4 +45,17 @@ test("Démo : le cas passant", async ({ page }) => {
     await expect(page.getByText("Jean Petit")).toBeVisible();
     await expect(page.getByText("Amélie Rousseau")).toHaveCount(0);
   });
+
+  await test.step("Je filtre les donateurs ayant atteint le plafond anti-spam", async () => {
+    await page.getByLabel("Filtrer par badge").selectOption("tous");
+    await page.getByText("Plafond atteint uniquement").click();
+    await expect(page.getByText("Nadia Haddad")).toBeVisible();
+    await expect(page.getByText("Jean Petit")).toHaveCount(0);
+  });
+
+  await test.step("Je cible une communication sur un badge", async () => {
+    await page.getByRole("button", { name: "Plan de comm" }).click();
+    await page.getByRole("combobox").nth(2).selectOption("or");
+    await expect(page.getByText(/destinataire\(s\)/).first()).toBeVisible();
+  });
 });
